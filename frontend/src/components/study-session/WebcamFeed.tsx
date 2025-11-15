@@ -1,3 +1,4 @@
+// src/components/WebcamFeed.tsx
 import { useState, useEffect, useRef } from "react";
 import { Camera, CameraOff, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -8,39 +9,102 @@ interface WebcamFeedProps {
   onFocusLost: () => void;
 }
 
+const WS_URL =
+  import.meta.env.VITE_BACKEND_WS_URL ?? "ws://localhost:8000/ws/focus"; //sets 8000 as default,  but should use backend url
+
 export default function WebcamFeed({ onFocusLost }: WebcamFeedProps) {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [isFocused, setIsFocused] = useState(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isWsConnected, setIsWsConnected] = useState(false);
 
+  ///states/notifications:
+  const [isFocused, setIsFocused] = useState(true); //isfocused: initially set to true, setisfocused can update the state
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null); //Access the <canvas> element to draw graphics --> for notifs? 
+  const wsRef = useRef<WebSocket | null>(null); //stores a websocket instance
+
+  // Start webcam on mount
   useEffect(() => {
     requestWebcam();
     return () => {
       if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Simulate focus detection (in real app, this would use AI)
+  // Open WebSocket connection
   useEffect(() => {
-    const interval = setInterval(() => {
-      const randomFocus = Math.random() > 0.1; // 90% focused
-      if (!randomFocus && isFocused) {
-        setIsFocused(false);
-        onFocusLost();
-        setTimeout(() => setIsFocused(true), 3000);
-      }
-    }, 15000);
+    const ws = new WebSocket(WS_URL); // connects to the url
+    wsRef.current = ws;
 
-    return () => clearInterval(interval);
-  }, [isFocused, onFocusLost]);
+    //onopen and onmessage (later) are event handler properties provided by the websocket api.
+    ws.onopen = () => {
+      console.log("WebSocket connected");
+      setIsWsConnected(true);
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket disconnected");
+      setIsWsConnected(false);
+    };
+
+    ws.onerror = (err) => {
+      console.error("WebSocket error:", err);
+    };
+
+    ws.onmessage = (event) => { //onmessage: handler triggered whenever the WebSocket receives a message from the server. the event contains the data sent by the server. 
+      //in this case, event = focus result boolean
+      //type: focus result
+      //boolean: isfocused
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.type === "focus_result") {
+          const focused = !!data.is_focused;
+
+          if (!focused && isFocused) {
+            // Just transitioned from focused -> not focused
+            setIsFocused(false);
+            onFocusLost();
+
+            // Show "Distracted" for a few seconds, then go back to focused
+            setTimeout(() => setIsFocused(true), 3000);
+          }
+        }
+      } catch (e) {
+        console.error("Error parsing WebSocket message:", e);
+      }
+    };
+
+    return () => {
+      ws.close();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onFocusLost, isFocused]);
+
+  // Periodically capture frames & send via WebSocket
+  useEffect(() => {
+    // Only start if:
+    // - we have permission
+    // - the WS is connected
+    // - we have a video element
+    if (!hasPermission || !isWsConnected || !videoRef.current) return;
+
+    const intervalMs = 500; // send ~2 frames/sec (adjust as you like)
+    const intervalId = setInterval(() => {
+      captureAndSendFrame();
+    }, intervalMs);
+
+    return () => clearInterval(intervalId);
+  }, [hasPermission, isWsConnected]);
 
   const requestWebcam = async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { width: 320, height: 240 } 
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 320, height: 240 },
       });
       setStream(mediaStream);
       setHasPermission(true);
@@ -48,8 +112,41 @@ export default function WebcamFeed({ onFocusLost }: WebcamFeedProps) {
         videoRef.current.srcObject = mediaStream;
       }
     } catch (error) {
+      console.error("Error getting webcam:", error);
       setHasPermission(false);
     }
+  };
+
+  const captureAndSendFrame = async () => {
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    const width = video.videoWidth || 320;
+    const height = video.videoHeight || 240;
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Draw video frame to canvas
+    ctx.drawImage(video, 0, 0, width, height);
+
+    // Get base64 JPEG
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+    // dataUrl looks like "data:image/jpeg;base64,XXXX..."
+    const base64Image = dataUrl.split(",")[1];
+
+    const payload = {
+      type: "frame",
+      image: base64Image,
+    };
+
+    ws.send(JSON.stringify(payload));
   };
 
   return (
@@ -60,11 +157,17 @@ export default function WebcamFeed({ onFocusLost }: WebcamFeedProps) {
             <Camera className="w-4 h-4" />
             <span className="text-sm font-semibold">Focus Monitor</span>
           </div>
+          {/* Focus indicator */}
           {isFocused ? (
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
           ) : (
             <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
           )}
+        </div>
+
+        {/* Optional: show WS status somewhere */}
+        <div className="text-xs text-blue-600">
+          WebSocket: {isWsConnected ? "Connected" : "Disconnected"}
         </div>
 
         {hasPermission === false && (
@@ -85,6 +188,7 @@ export default function WebcamFeed({ onFocusLost }: WebcamFeedProps) {
               muted
               className="w-full h-full object-cover"
             />
+
             {!isFocused && (
               <div className="absolute inset-0 bg-orange-500/20 flex items-center justify-center">
                 <span className="text-white text-xs font-semibold bg-orange-500 px-3 py-1 rounded-full">
@@ -92,6 +196,9 @@ export default function WebcamFeed({ onFocusLost }: WebcamFeedProps) {
                 </span>
               </div>
             )}
+
+            {/* Hidden canvas for capturing frames */}
+            <canvas ref={canvasRef} className="hidden" />
           </div>
         ) : hasPermission === null ? (
           <div className="aspect-video rounded-xl bg-gray-200 animate-pulse flex items-center justify-center">
@@ -100,7 +207,7 @@ export default function WebcamFeed({ onFocusLost }: WebcamFeedProps) {
         ) : (
           <div className="aspect-video rounded-xl bg-gray-100 flex flex-col items-center justify-center space-y-2 p-4">
             <CameraOff className="w-8 h-8 text-gray-400" />
-            <Button 
+            <Button
               onClick={requestWebcam}
               size="sm"
               variant="outline"

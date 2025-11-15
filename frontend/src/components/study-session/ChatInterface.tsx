@@ -168,7 +168,7 @@ export default function ChatInterface({ onVideoRequest }: ChatInterfaceProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Ask Study Buddy anything..."
+            placeholder="What video do you want to play?.."
             className="rounded-full border-purple-300 focus:border-purple-500 bg-white"
           />
           <Button

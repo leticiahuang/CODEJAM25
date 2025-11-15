@@ -129,10 +129,6 @@ export default function ChatInterface({ onVideoRequest }: ChatInterfaceProps) {
           </Avatar>
           <div>
             <h3 className="font-semibold text-purple-900">Study Buddy</h3>
-            <p className="text-xs text-purple-600 flex items-center">
-              <span className="w-2 h-2 bg-green-500 rounded-full mr-1.5 animate-pulse" />
-              Always here to help
-            </p>
           </div>
         </div>
       </div>

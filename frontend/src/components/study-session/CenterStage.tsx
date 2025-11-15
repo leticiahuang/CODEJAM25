@@ -29,7 +29,7 @@ export default function CenterStage({
             <div className="relative">
               <motion.div
                 animate={{ 
-                  y: [0, -20, 0],
+                  y: [0, -10, 0],
                 }}
                 transition={{ 
                   duration: 3,
@@ -38,50 +38,42 @@ export default function CenterStage({
                 }}
                 className="w-64 h-64 bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 rounded-full flex items-center justify-center shadow-2xl"
               >
-                <motion.div
-                  animate={{ 
-                    rotate: [0, 5, -5, 0],
-                  }}
-                  transition={{ 
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                  className="text-8xl"
-                >
-                  🎓
-                </motion.div>
+              <motion.img
+              //THIS IS THE GIF URL
+              src="icon.png"
+              animate={{ rotate: [0, 2, -2, 0] }}
+              transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="w-48 h-48 object-contain rounded-full"
+            />
               </motion.div>
               
-              {/* Floating sparkles */}
+              {/* Floating sparkles!!!!!!!!!!! */}
               <motion.div
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  opacity: [0.5, 1, 0.5]
-                }}
+                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
                 transition={{ 
                   duration: 2,
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
-                className="absolute -top-4 -right-4 text-4xl"
+                className="absolute -top-4 -left-4"
               >
-                ✨
+                <img src="star.png" className="w-10 h-auto object-contain" style={{ objectFit: "contain" }} />
               </motion.div>
               <motion.div
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  opacity: [0.5, 1, 0.5]
-                }}
+                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5]}}
                 transition={{ 
                   duration: 2,
                   repeat: Infinity,
                   ease: "easeInOut",
                   delay: 1
                 }}
-                className="absolute -bottom-4 -left-4 text-4xl"
+                 className="absolute -bottom-4 -right-4"
               >
-                💫
+               <img src="star.png" className="w-10 h-auto object-contain" style={{ objectFit: "contain" }}/>
               </motion.div>
             </div>
 
@@ -90,7 +82,7 @@ export default function CenterStage({
                 Study Buddy
               </h2>
               <p className="text-gray-600 max-w-md">
-                I'm here to help you focus and learn! Ask me questions or request study materials in the chat.
+                Time to lock in!
               </p>
             </div>
           </motion.div>
@@ -119,21 +111,6 @@ export default function CenterStage({
             >
               <X className="w-5 h-5" />
             </Button>
-
-            {/* Mini Mascot in corner */}
-            <motion.div
-              animate={{ 
-                rotate: [0, 10, -10, 0],
-              }}
-              transition={{ 
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-              className="absolute bottom-4 left-4 w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center shadow-lg z-10"
-            >
-              <span className="text-3xl">🎓</span>
-            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

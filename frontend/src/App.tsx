@@ -1,7 +1,7 @@
 import { Suspense, useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { supabase } from "./lib/supabaseClient";
-import Home from "./components/Home";
+//import Home from "./components/Home";
 import Dashboard from "./components/Dashboard";
 import StudySession from "./components/StudySession";
 import Auth from "./components/Auth";
@@ -45,8 +45,8 @@ function App() {
     <Suspense fallback={<p>Loading...</p>}>
       <>
         <Routes>
-          <Route path="/" element={session ? <Navigate to="/home" replace /> : <Auth />} />
-          <Route path="/home" element={session ? <Home /> : <Navigate to="/" />} />
+          <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <Auth />} />
+          {/*<Route path="/home" element={session ? <Home /> : <Navigate to="/" />} />*/}
           <Route path="/dashboard" element={session ? <Dashboard /> : <Navigate to="/" />} />
           <Route path="/study-session" element={session ? <StudySession /> : <Navigate to="/" />} />
           <Route path="/session-summary" element={session ? <SessionSummary /> : <Navigate to="/" />} />

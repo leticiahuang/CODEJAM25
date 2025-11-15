@@ -1,10 +1,28 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Sparkles } from "lucide-react";
+import { GraduationCap, Sparkles, LogOut } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
-function Home() {
+export default function Home() {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
+
   return (
-    <div className="w-screen h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center">
+    <div className="w-screen h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center relative">
+      {/* Logout button in top right */}
+      <Button
+        onClick={handleLogout}
+        variant="ghost"
+        className="absolute top-4 right-4 gap-2"
+      >
+        <LogOut className="w-4 h-4" />
+        Logout
+      </Button>
+
       <div className="text-center space-y-8 p-8">
         <div className="space-y-4">
           <div className="flex justify-center">
@@ -22,15 +40,28 @@ function Home() {
           </p>
         </div>
 
-        <Link to="/study-session">
-          <Button 
-            size="lg" 
-            className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-xl text-lg px-8 py-6"
-          >
-            <Sparkles className="w-5 h-5 mr-2" />
-            Start Study Session
-          </Button>
-        </Link>
+        <div className="flex gap-4 justify-center">
+          <Link to="/study-session">
+            <Button 
+              size="lg" 
+              className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-xl text-lg px-8 py-6"
+            >
+              <Sparkles className="w-5 h-5 mr-2" />
+              Start Study Session
+            </Button>
+          </Link>
+          
+          <Link to="/dashboard">
+            <Button 
+              size="lg" 
+              variant="outline"
+              className="rounded-full border-2 border-purple-500 text-purple-600 hover:bg-purple-50 shadow-xl text-lg px-8 py-6"
+            >
+              <GraduationCap className="w-5 h-5 mr-2" />
+              View Dashboard
+            </Button>
+          </Link>
+        </div>
 
         <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto mt-12">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-purple-200 shadow-lg">
@@ -54,6 +85,4 @@ function Home() {
       </div>
     </div>
   );
-}
-
-export default Home;
+};

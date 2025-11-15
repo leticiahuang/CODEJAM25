@@ -12,7 +12,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(chatbot.router, prefix="/api", tags=["chatbot"])
+app.include_router(chatbot.router, prefix="/api", tags=["chat"])
 
 @app.get("/api/health")
 async def health():

@@ -1,0 +1,70 @@
+# app/routers/focus_ws.py
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+import cv2
+import numpy as np
+import base64
+import json
+
+
+router = APIRouter()
+
+
+def detect_focus(frame: np.ndarray) -> bool:
+    """
+    Run all 3 detectors + focus score on a single frame.
+    Returns a plain dict that can be sent over WebSocket as JSON.
+    """
+    return False
+
+
+@router.websocket("/ws/focus")
+async def websocket_focus(websocket: WebSocket):
+    # Accept the WebSocket connection
+    await websocket.accept()
+    print("Client connected to /ws/focus")
+
+    try:
+        while True:
+            # Wait for a text message from the client
+            msg = await websocket.receive_text()
+
+            # Expect JSON like: { "type": "frame", "image": "<base64>" }
+            try:
+                data = json.loads(msg)
+            except json.JSONDecodeError:
+                print("Received non-JSON message")
+                continue
+
+            if data.get("type") != "frame":
+                # Ignore unknown message types
+                continue
+
+            base64_image = data.get("image")
+            if not base64_image:
+                continue
+
+            try:
+                # Decode base64 -> bytes -> np array -> OpenCV image
+                img_bytes = base64.b64decode(base64_image)
+                np_img = np.frombuffer(img_bytes, np.uint8)
+                frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+
+                ###NOW: RETURN THE OPENCV FOCUS DETECTION RESULT
+                is_focused = detect_focus(frame)
+
+                # Send result back to client
+                await websocket.send_json(
+                    {
+                        "type": "focus_result",
+                        "is_focused": bool(is_focused),
+                    }
+                )
+
+            except Exception as e:
+                print(f"Error processing frame: {e}")
+
+    except WebSocketDisconnect:
+        print("Client disconnected from /ws/focus")
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+        await websocket.close()

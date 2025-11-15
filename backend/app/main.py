@@ -13,6 +13,8 @@ app.add_middleware(
 )
 
 app.include_router(chatbot.router, prefix="/api", tags=["chat"])
+app.include_router(notifications_router)
+app.include_router(scores_router)
 
 @app.get("/api/health")
 async def health():

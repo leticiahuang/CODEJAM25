@@ -17,75 +17,106 @@ interface ChatInterfaceProps {
   onVideoRequest: (videoUrl: string) => void;
 }
 
+
+// what we expect back from the backend!!!!!! this is defined in our backend too!!!!!!!
+interface ChatApiResponse {
+  reply: string;
+  videoUrl?: string | null;
+  shouldPlayVideo?: boolean;
+}
+
+
 export default function ChatInterface({ onVideoRequest }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hi there! I'm your Study Buddy! 🎓 Ask me anything or request study materials to help you learn.",
+      text: "Hi there! Do you want to set a video as a background as you study?",
       sender: "ai",
       timestamp: new Date()
     }
   ]);
   const [input, setInput] = useState("");
+  const [isSending, setIsSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  //auto scroll to the bottom
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
 
+  //HANDLE SENDING A MESSAGE LOGIC  
+  const handleSend = async () => {
+    if (!input.trim() || isSending) return;
+
+    //USER MESSAGE
+    const userText = input;
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: input,
+      text: userText,
       sender: "user",
       timestamp: new Date()
     };
 
+    // show the user's message immediately
     setMessages(prev => [...prev, userMessage]);
     setInput("");
+    setIsSending(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse = generateAIResponse(input);
-      setMessages(prev => [...prev, aiResponse]);
-    }, 1000);
-  };
+    //TRY AND GET RESPONSE FROM THE BACKEND ENDPOINT!!!
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { //additional information sent along with an HTTP request. says: type of data being sent is json type
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: userText,
+          // optional: send chat history for more context
+          history: messages.map(m => ({
+            role: m.sender === "user" ? "user" : "assistant",
+            content: m.text
+          }))
+        })
+      });
 
-  const generateAIResponse = (userInput: string): Message => {
-    const lowerInput = userInput.toLowerCase();
-    
-    // Check for video requests
-    if (lowerInput.includes("video") || lowerInput.includes("watch") || lowerInput.includes("show me")) {
-      setTimeout(() => {
-        onVideoRequest("https://www.youtube.com/embed/dQw4w9WgXcQ");
-      }, 500);
-      
-      return {
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      const data: ChatApiResponse = await response.json();
+
+      const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: "Great! I've loaded a study video for you in the center. Let me know if you need anything else! 📺",
+        text: data.reply,
         sender: "ai",
         timestamp: new Date()
       };
+
+      setMessages(prev => [...prev, aiMessage]);
+
+      // if backend found a video, hook into existing video UI
+      const shouldPlay =
+        data.shouldPlayVideo ?? Boolean(data.videoUrl);
+
+      if (shouldPlay && data.videoUrl) {
+        onVideoRequest(data.videoUrl);
+      }
+
+    } catch (error) {
+      console.error("Error talking to backend:", error);
+      const errorMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        text: "Sorry, I ran into a problem talking to the server. Please try again in a moment.",
+        sender: "ai",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsSending(false);
     }
-
-    // Default responses
-    const responses = [
-      "That's a great question! Let me help you with that. 🤔",
-      "I'm here to support your learning journey! What specific topic would you like to explore? 📚",
-      "Interesting! Would you like me to find some study materials on this topic? 🔍",
-      "I can help you with that! Feel free to ask for videos or explanations. ✨"
-    ];
-
-    return {
-      id: (Date.now() + 1).toString(),
-      text: responses[Math.floor(Math.random() * responses.length)],
-      sender: "ai",
-      timestamp: new Date()
-    };
   };
 
   return (

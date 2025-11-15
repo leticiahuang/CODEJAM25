@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
+from app.services import youtube_client
 
 router = APIRouter()
 
@@ -20,31 +21,42 @@ class ChatResponse(BaseModel):
 
 
 # define the routers
-@router.post("/chat", response_model=ChatResponse) #the user wants the server (backend) to create a new chat
+@router.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
-  # 1. Build conversation for model
-  messages = req.history or []
-  messages.append({"role": "user", "content": req.message})
+    """
+    Receive a user message, use it as a YouTube search query,
+    and return the top video as `videoUrl`.
+    """
 
-  # 2. Call LLM
-  completion = openai.ChatCompletion.create(
-      model="gpt-4o-mini",  # or whatever
-      messages=messages
-  )
+    # (You don't *need* history yet, but we'll leave it in case you add LLMs later)
+    # messages = req.history or []
+    # messages.append({"role": "user", "content": req.message})
 
-  reply_text = completion.choices[0].message["content"]
+    # Use the user's message directly as the search query for now
+    query = req.message.strip()
+    if not query:
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
 
-  # 3. Decide if we should search for a video
-  should_play_video = "video" in req.message.lower() or "watch" in req.message.lower()
-  video_url = None
+    try:
+        video_url = await youtube_client.search_best_video(query)
+    except Exception as e:
+        # log this in real life
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error while searching YouTube: {str(e)}"
+        )
 
-  if should_play_video:
-      # TODO: Use YouTube API or another search service.
-      # For now, just a placeholder:
-      video_url = "https://www.youtube.com/embed/dQw4w9WgXcQ"
+    if not video_url:
+        # No video found – you still need to return a valid ChatResponse
+        return ChatResponse(
+            reply="I couldn't find a suitable video for that topic. Try rephrasing or being more specific? 😊",
+            shouldPlayVideo=False,
+            videoUrl=None,
+        )
 
-  return ChatResponse(
-      reply=reply_text,
-      shouldPlayVideo=bool(video_url),
-      videoUrl=video_url
-  )
+    # Found a video – tell the frontend to play it
+    return ChatResponse(
+        reply=f"Here's a video I found that should help with: “{query}” 🎥",
+        shouldPlayVideo=True,
+        videoUrl=video_url,
+    )

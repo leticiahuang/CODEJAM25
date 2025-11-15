@@ -95,14 +95,14 @@ export default function Dashboard() {
       {/* Top Navigation Bar */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-purple-200">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Button
+          {/*<Button
             onClick={handleBackToHome}
             variant="ghost"
             className="text-purple-600 hover:text-purple-700 hover:bg-purple-100"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Home
-          </Button>
+          </Button>*/}
           <Button
             onClick={handleLogout}
             variant="ghost"
@@ -119,7 +119,11 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 rounded-full flex items-center justify-center shadow-xl">
-              <GraduationCap className="w-8 h-8 text-white" />
+              <img
+                src="/icon.png"
+                alt="App Icon"
+                className="w-32 h-32 object-contain"
+              />
             </div>
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">

@@ -1,43 +1,96 @@
-# backend/routers/notifications_router.py
-from fastapi import APIRouter, UploadFile, File, HTTPException
-from pydantic import BaseModel
+# backend/routers/focus_ws.py
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+import cv2
 import numpy as np
+import base64
+import json
 
-from ..utils.image_utils import read_image_to_ndarray
 from ..services.phone_detection import detect_phone
 from ..services.tired_detection import detect_tired
 from ..services.fidgety_detection import detect_fidgety
+from ..services.focus_score_calculator import calculate_focus_score
 
-router = APIRouter(prefix="/notifications", tags=["notifications"])
-
-
-class NotificationsResponse(BaseModel):
-    tired: bool
-    fidgety: bool
-    phone: bool
+router = APIRouter()
 
 
-@router.post("", response_model=NotificationsResponse)
-async def post_notifications(frame: UploadFile = File(...)):
+def analyze_frame(frame: np.ndarray) -> dict:
     """
-    Analyze a single frame and return which notifications should be triggered:
-      - tired
-      - fidgety
-      - phone
+    Run all 3 detectors + focus score on a single frame.
+    Returns a plain dict that can be sent over WebSocket as JSON.
     """
+    phone_res = detect_phone(frame)
+    tired_res = detect_tired(frame)
+    fidgety_res = detect_fidgety(frame)
+    focus_res = calculate_focus_score(frame)
+
+    return {
+        # Notifications (what you asked for)
+        "phone": phone_res.phone_detected,
+        "phone_confidence": phone_res.confidence,
+
+        "tired": tired_res.is_tired,
+        "tired_score": tired_res.score,  # 0–1
+
+        "fidgety": fidgety_res.is_fidgety,
+        "fidgety_score": fidgety_res.movement_score,  # 0–1
+
+        #  overall focus info
+        "focus_score": focus_res.focus_score,  # 0–1
+        "is_focused": focus_res.is_focused,
+    }
+
+
+@router.websocket("/ws/focus")
+async def websocket_focus(websocket: WebSocket):
+    # Accept the WebSocket connection
+    await websocket.accept()
+    print("Client connected to /ws/focus")
+
     try:
-        img = await read_image_to_ndarray(frame)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        while True:
+            # Wait for a text message from the client
+            msg = await websocket.receive_text()
 
-    phone_res = detect_phone(img)
-    tired_res = detect_tired(img)
-    fidgety_res = detect_fidgety(img)
+            # Expect JSON like: { "type": "frame", "image": "<base64>" }
+            try:
+                data = json.loads(msg)
+            except json.JSONDecodeError:
+                print("Received non-JSON message")
+                continue
 
-    # For now, we map directly from the underlying booleans.
-    # You can add thresholds/logic if needed.
-    return NotificationsResponse(
-        tired=tired_res.is_tired,
-        fidgety=fidgety_res.is_fidgety,
-        phone=phone_res.phone_detected,
-    )
+            if data.get("type") != "frame":
+                # Ignore unknown message types
+                continue
+
+            base64_image = data.get("image")
+            if not base64_image:
+                continue
+
+            try:
+                # Decode base64 -> bytes -> np array -> OpenCV image
+                img_bytes = base64.b64decode(base64_image)
+                np_img = np.frombuffer(img_bytes, np.uint8)
+                frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+
+                if frame is None:
+                    print("Failed to decode frame")
+                    continue
+
+                result = analyze_frame(frame)
+
+                # Send result back to client
+                await websocket.send_json(
+                    {
+                        "type": "focus_result",
+                        **result,
+                    }
+                )
+
+            except Exception as e:
+                print(f"Error processing frame: {e}")
+
+    except WebSocketDisconnect:
+        print("Client disconnected from /ws/focus")
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+        await websocket.close()

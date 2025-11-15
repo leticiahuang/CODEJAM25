@@ -1,21 +1,34 @@
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import Notification, { NotificationProps } from "./Notification";
 
 interface CenterStageProps {
   isVideoPlaying: boolean;
   videoUrl: string | null;
   onCloseVideo: () => void;
+  notification?: NotificationProps | null;
+  onCloseNotification?: () => void;
 }
 
 export default function CenterStage({ 
   isVideoPlaying = false, 
   videoUrl = null, 
-  onCloseVideo 
+  onCloseVideo,
+  notification = null,
+  onCloseNotification
 }: CenterStageProps) {
   return (
     <div className="w-full h-full flex items-center justify-center relative">
       <AnimatePresence mode="wait">
+        {/* Show Notification if any */}
+        {notification && (
+          <Notification
+            key={notification.message}
+            {...notification}
+            onClose={onCloseNotification}
+          />
+        )}
         {!isVideoPlaying ? (
           <motion.div
             key="mascot"

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import SessionTimer from "./study-session/SessionTimer";
 import WebcamFeed from "./study-session/WebcamFeed";
 import FocusNotifications from "./study-session/FocusNotifications";
@@ -6,10 +7,14 @@ import ChatInterface from "./study-session/ChatInterface";
 import CenterStage from "./study-session/CenterStage";
 
 export default function StudySession() {
-  //VARIABLES to determine certain states
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false); //VARIABLE isvideoplaying is defaulted to false. the function setisvideoplaying  can be used to update the value of isvideoplaying
-  const [currentVideo, setCurrentVideo] = useState<string | null>(null); //NULL: when the component first loads, no video has been selected yet. STRING IS URL TO VIDEO PATH
-  const [notifications, setNotifications] = useState<Array<{ id: string; message: string; timestamp: Date }>>([]); //when component first loads, theres no notifications. each time one gets created, add it to the array with a time and id
+  const location = useLocation();
+  const navigate = useNavigate();
+  const sessionDuration = location.state?.duration || 30; // in minutes
+  
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [currentVideo, setCurrentVideo] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<Array<{ id: string; message: string; timestamp: Date }>>([]);
+  const [interruptionCount, setInterruptionCount] = useState(0);
 
   const handleVideoRequest = (videoUrl: string) => {
     setCurrentVideo(videoUrl);
@@ -21,18 +26,34 @@ export default function StudySession() {
     setCurrentVideo(null);
   };
 
-  //logic to create a new notification when focus is lost!!!!!!!!! 
-  //right now the notification is hard coded
   const handleFocusLost = () => {
-    const newNotification = { // creates a new notification object
+    const newNotification = {
       id: Date.now().toString(),
       message: "Hey there! Let's get back to studying 📚",
       timestamp: new Date()
     };
-    setNotifications(prev => [newNotification, ...prev].slice(0, 5)); //creates a new array by placing the newnotification at the beginning so new notification is at the top of the list
+    setNotifications(prev => [newNotification, ...prev].slice(0, 5));
+    setInterruptionCount(prev => prev + 1);
   };
 
-  // now, here's the main layout of the page
+  const handleSessionEnd = (stats: { duration: number; breaks: number; completedFully: boolean }) => {
+    // Calculate focus score based on interruptions and duration
+    const maxInterruptions = Math.max(1, Math.floor(stats.duration / 10)); // Expected 1 per 10 min
+    const focusScore = Math.max(0, Math.min(100, Math.round(100 - (interruptionCount / maxInterruptions) * 30)));
+    
+    navigate("/session-summary", {
+      state: {
+        stats: {
+          duration: stats.duration,
+          focusScore,
+          breaks: stats.breaks,
+          interruptions: interruptionCount,
+          completedFully: stats.completedFully
+        }
+      }
+    });
+  };
+
   return (
     <div className="h-screen w-full bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex overflow-hidden">
       {/* Left Sidebar - Chat Interface */}
@@ -51,7 +72,10 @@ export default function StudySession() {
 
       {/* Right Sidebar - Timer, Webcam, Notifications */}
       <div className="w-80 flex-shrink-0 border-l border-purple-200 bg-white/80 backdrop-blur-sm flex flex-col">
-        <SessionTimer />
+        <SessionTimer 
+          totalDuration={sessionDuration * 60} 
+          onSessionEnd={handleSessionEnd}
+        />
         <WebcamFeed onFocusLost={handleFocusLost} />
         <FocusNotifications notifications={notifications} />
       </div>

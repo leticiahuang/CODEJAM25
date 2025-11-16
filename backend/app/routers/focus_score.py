@@ -20,6 +20,7 @@ class FocusSummary(BaseModel):
     phone: int
     tired: int
     fidgety: int
+    focus_score: float
     focus_timeline: List[List[float]]
 
 
@@ -47,9 +48,16 @@ def get_focus_summary(reset: bool = False) -> FocusSummary:
     Returns how many times phone/tired/fidgety were true overall.
     If reset=true, also clears the counters after returning them.
     """
-    global phone_count, tired_count, fidgety_count
+    global phone_count, tired_count, fidgety_count, focus_timeline, time_counter
+
+    #calculate average focus score
+    if focus_timeline:
+        avg_focus = sum(score for _, score in focus_timeline) / len(focus_timeline)
+    else:
+        avg_focus = 0.0
 
     summary = FocusSummary(
+        focus_score=avg_focus,
         phone=phone_count,
         tired=tired_count,
         fidgety=fidgety_count,

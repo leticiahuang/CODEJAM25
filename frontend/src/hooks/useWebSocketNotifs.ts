@@ -40,9 +40,10 @@ export default function useWebSocketNotifs(
           ? {
               id: Date.now().toString(),
               type: "phone",
-              message: "GET OFF YOUR PHONE 📵",
+              message: "GET OFF YOUR PHOOOOOONE 📵",
               icon: "📵",
               bgColor: "bg-red-500",
+              persistent: true,
             }
           : tired
           ? {

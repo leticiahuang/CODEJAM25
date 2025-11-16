@@ -46,7 +46,7 @@ def update_focus_counters(*, phone: bool, tired: bool, fidgety: bool, focus_scor
     Returns how many times phone/tired/fidgety were true overall.
     If reset=true, also clears the counters after returning them.
 """
-"""
+
 @router.get("/summary", response_model=FocusSummary)
 def get_focus_summary(reset: bool = False) -> FocusSummary:
     
@@ -73,15 +73,15 @@ def get_focus_summary(reset: bool = False) -> FocusSummary:
         focus_timeline = []
         time_counter = 0.0
 
-    return summary"""
+    return summary
 
 
-@router.get("/summary", response_model=FocusSummary)
-def get_focus_summary(reset: bool = False) -> FocusSummary:
-    return FocusSummary(
-        phone=3,
-        tired=1,
-        fidgety=2,
-        focus_score=0.82,
-        focus_timeline=[[0, 0.8], [1, 0.85], [2, 0.83]]
-    )
+# @router.get("/summary", response_model=FocusSummary)
+# def get_focus_summary(reset: bool = False) -> FocusSummary:
+#     return FocusSummary(
+#         phone=3,
+#         tired=1,
+#         fidgety=2,
+#         focus_score=0.82,
+#         focus_timeline=[[0, 0.8], [1, 0.85], [2, 0.83]]
+#     )

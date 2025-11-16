@@ -16,19 +16,19 @@ import {
 
 interface StatsApiResponse {
   focus_score: number;
-  phone: number;
-  tired: number;
-  fidgety: number;
-  graph: string; // URL or base64-encoded data URI
-  focus_timeline: number[][]
+  graph: string;             // URL or base64-encoded data URI
+  focus_timeline: number[][]; // optional, not used in UI right now
 }
 
 // What the frontend already knows about the session (passed from previous page)
 interface FrontendSessionInput {
-  duration: number;       // in minutes
+  duration: number;
   breaks: number;
   interruptions: number;
   completedFully: boolean;
+  phoneCount: number;
+  tiredCount: number;
+  fidgetyCount: number;
 }
 
 // Full stats used by this page (backend + frontend)
@@ -44,11 +44,11 @@ interface SessionStats {
   completedFully: boolean;
 }
 
-export default function SessionSummary() { //this WHOLE THING is the react component????
+export default function SessionSummary() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // What the previous page passed in via navigate("/summary", { state: { stats: ... } })
+  // What the previous page passed in via navigate("/session-summary", { state: { stats: ... } })
   const sessionInput: FrontendSessionInput | undefined = location.state?.stats;
 
   const [stats, setStats] = useState<SessionStats | null>(null);
@@ -57,82 +57,88 @@ export default function SessionSummary() { //this WHOLE THING is the react compo
 
   useEffect(() => {
     const fetchStats = async () => {
+      // base data from frontend so we always have something to show
+      const baseInput: FrontendSessionInput = sessionInput || {
+        duration: 0,
+        breaks: 0,
+        interruptions: 0,
+        completedFully: false,
+        phoneCount: 0,
+        tiredCount: 0,
+        fidgetyCount: 0
+      };
+
       try {
         const res = await fetch("/api/focus/summary", {
-          method: "GET",
+          method: "GET"
         });
-  
+
         if (!res.ok) {
           throw new Error(
             `Request to retrieve session's focus score failed with status ${res.status}`
           );
         }
-  
+
         const data: StatsApiResponse = await res.json();
+        console.log("Backend focus summary:", data);
 
-console.log("Backend focus summary:", data); // 👈 add this for debugging
-
-const baseInput: FrontendSessionInput = sessionInput || {
-  duration: 0,
-  breaks: 0,
-  interruptions: 0,
-  completedFully: false
-};
-
-setStats({
-  // if focus_score is 0–1 and you want %, multiply by 100
-  focusScore: data.focus_score,  // or Math.round(data.focus_score * 100)
-  phoneCount: data.phone,
-  tiredCount: data.tired,
-  fidgetyCount: data.fidgety,
-  graph: "",                     // nothing from backend yet
-  duration: baseInput.duration,
-  breaks: baseInput.breaks,
-  interruptions: baseInput.interruptions,
-  completedFully: baseInput.completedFully
-});
-
-        
-      } catch (err) {
-        console.error("Error talking to backend:", err);
-        setError("We couldn't load your focus stats from the server.");
-  
-        const baseInput: FrontendSessionInput = sessionInput || {
-          duration: 0,
-          breaks: 0,
-          interruptions: 0,
-          completedFully: false
-        };
-  
         setStats({
-          focusScore: 0,
-          phoneCount: 0,
-          tiredCount: 0,
-          fidgetyCount: 0,
-          graph: "",
+          // backend focus_score is assumed 0–1, convert to %
+          focusScore: Math.round(data.focus_score * 100),
+          // counts come from frontend
+          phoneCount: baseInput.phoneCount,
+          tiredCount: baseInput.tiredCount,
+          fidgetyCount: baseInput.fidgetyCount,
+          // graph from backend (if provided)
+          graph: data.graph || "",
           duration: baseInput.duration,
           breaks: baseInput.breaks,
           interruptions: baseInput.interruptions,
           completedFully: baseInput.completedFully
         });
+      } catch (err) {
+        console.error("Error talking to backend:", err);
+        setError("We couldn't load your focus stats from the server.");
+
+        const fallbackInput: FrontendSessionInput = sessionInput || {
+          duration: 0,
+          breaks: 0,
+          interruptions: 0,
+          completedFully: false,
+          phoneCount: 0,
+          tiredCount: 0,
+          fidgetyCount: 0
+        };
+
+        // Fallback: show what we know from frontend only
+        setStats({
+          focusScore: 0,
+          phoneCount: fallbackInput.phoneCount,
+          tiredCount: fallbackInput.tiredCount,
+          fidgetyCount: fallbackInput.fidgetyCount,
+          graph: "",
+          duration: fallbackInput.duration,
+          breaks: fallbackInput.breaks,
+          interruptions: fallbackInput.interruptions,
+          completedFully: fallbackInput.completedFully
+        });
       } finally {
         setLoading(false);
       }
     };
-  
+
     fetchStats();
   }, [sessionInput]);
-  
 
   const getFocusScoreColor = (score: number) => {
-    if (score >= 85) return "text-green-600";
-    if (score >= 70) return "text-yellow-600";
+    if (score >= 70) return "text-green-600";
+    if (score >= 50) return "text-yellow-600";
     return "text-red-600";
   };
 
   const getFocusMessage = (score: number) => {
-    if (score >= 85) return "Excellent focus! Keep it up!";
-    if (score >= 70) return "Good job! Room for improvement";
+    if (score >= 70) return "Excellent focus! Keep it up!";
+    if (score >= 50) return "Good job! Room for improvement";
     return "Let's work on staying focused next time";
   };
 
@@ -197,17 +203,6 @@ setStats({
             </div>
             <div className="text-sm text-gray-700 font-medium">
               {getFocusMessage(stats.focusScore)}
-            </div>
-            <div className="mt-3 flex justify-center gap-2">
-              <Badge variant="secondary" className="bg-white/70">
-                Duration: {stats.duration} min
-              </Badge>
-              <Badge variant="secondary" className="bg-white/70">
-                Breaks: {stats.breaks}
-              </Badge>
-              <Badge variant="secondary" className="bg-white/70">
-                Interruptions: {stats.interruptions}
-              </Badge>
             </div>
           </div>
 
@@ -332,7 +327,6 @@ setStats({
                 </span>
               </div>
               <div className="w-full overflow-hidden rounded-xl border border-purple-100 bg-purple-50/40">
-                {/* graph is assumed to be an image URL or data URI */}
                 <img
                   src={stats.graph}
                   alt="Focus graph for this study session"

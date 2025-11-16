@@ -25,5 +25,4 @@ uvicorn[standard]
 mediapipe==0.10.21
 opencv-contrib-python
 numpy
-
-google.generativeai==0.3.3
+google.generativeai

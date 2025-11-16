@@ -5,9 +5,6 @@ import WebcamFeed from "./study-session/WebcamFeed";
 import FocusNotifications from "./study-session/FocusNotifications";
 import ChatInterface from "./study-session/ChatInterface";
 import CenterStage from "./study-session/CenterStage";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, LogOut } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
 import NotificationManager, { AppNotification } from "@/components/study-session/NotificationManager";
 import useWebSocketNotifications from "@/hooks/useWebSocketNotifs";
 import { LogOut } from "lucide-react";
@@ -149,16 +146,9 @@ export default function StudySession() {
         {/* Right Sidebar - Timer, Webcam, Notifications */}
         <div className="w-80 flex-shrink-0 border-l border-purple-200 bg-white/80 backdrop-blur-sm flex flex-col">
           <SessionTimer 
-            totalDuration={sessionDuration * 60} 
-            onSessionEnd={handleSessionEnd}
-          />
-          <WebcamFeed onFocusLost={handleFocusLost} />
-          <FocusNotifications notifications={notifications} />
-        </div>
-        {/* Right Sidebar - Timer, Webcam, Notifications */}
-        <div className="w-80 flex-shrink-0 border-l border-purple-200 bg-white/80 backdrop-blur-sm flex flex-col">
-          <SessionTimer 
-            totalDuration={sessionDuration * 60} 
+            totalDuration={sessionDuration * 60}
+            breakInterval={breakInterval * 60}
+            breakDuration={breakDuration * 60}
             onSessionEnd={handleSessionEnd}
           />
           <WebcamFeed onFocusLost={handleFocusLost} />

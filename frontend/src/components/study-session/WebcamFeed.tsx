@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface WebcamFeedProps {
-  onFocusLost: () => void;
+  onFocusLost: ({ phone, tired, fidgety }) => void;
 }
 
 const WS_URL =
@@ -57,18 +57,22 @@ export default function WebcamFeed({ onFocusLost }: WebcamFeedProps) {
 
     ws.onmessage = (event) => { //onmessage: handler triggered whenever the WebSocket receives a message from the server. the event contains the data sent by the server. 
       //in this case, event = focus result boolean
+      //old version
       //type: focus result
       //boolean: isfocused
       try {
         const data = JSON.parse(event.data);
 
         if (data.type === "focus_result") {
-          const focused = !!data.is_focused;
+          const phone = !!data.phone; //phone: boolean for if ur on ur phone
+          const fidgety = !!data.fidgety; //fidgety: boolean for if ur fidgety
+          const tired = !!data.tired; //distracted: boolean for if ur distracted
+          const distracted = phone || fidgety || tired;
 
-          if (!focused && isFocused) {
+          if (distracted && isFocused) {
             // Just transitioned from focused -> not focused
             setIsFocused(false);
-            onFocusLost();
+            onFocusLost({ phone, tired, fidgety });
 
             // Show "Distracted" for a few seconds, then go back to focused
             setTimeout(() => setIsFocused(true), 3000);

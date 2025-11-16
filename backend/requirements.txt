@@ -23,6 +23,6 @@ typing-inspection==0.4.2
 typing_extensions==4.15.0
 uvicorn[standard]
 mediapipe==0.10.21
-opencv-contrib-python==4.11.0.86
+opencv-contrib-python
 numpy
 

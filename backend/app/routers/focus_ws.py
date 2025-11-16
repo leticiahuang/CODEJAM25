@@ -89,4 +89,3 @@ async def websocket_focus(websocket: WebSocket):
         print("Client disconnected from /ws/focus")
     except Exception as e:
         print(f"WebSocket error: {e}")
-        await websocket.close()

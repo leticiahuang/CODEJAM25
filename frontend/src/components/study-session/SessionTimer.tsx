@@ -6,15 +6,22 @@ import { Badge } from "@/components/ui/badge";
 
 interface SessionTimerProps {
   totalDuration: number; // in seconds
+  breakInterval: number; // in seconds
+  breakDuration: number; // in seconds
   onSessionEnd: (stats: { duration: number; breaks: number; completedFully: boolean }) => void;
 }
 
-export default function SessionTimer({ totalDuration, onSessionEnd }: SessionTimerProps) {
-  const [timeLeft, setTimeLeft] = useState(totalDuration);
-  const [timeUntilBreak, setTimeUntilBreak] = useState(30 * 60); // 30 minutes in seconds
+export default function SessionTimer({ totalDuration, breakInterval, breakDuration, onSessionEnd }: SessionTimerProps) {
+  // Calculate total time including all breaks
+  const numBreaks = Math.floor(totalDuration / breakInterval);
+  const totalTimeWithBreaks = totalDuration + (numBreaks * breakDuration);
+  
+  const [timeLeft, setTimeLeft] = useState(totalTimeWithBreaks);
+  const [studyTimeLeft, setStudyTimeLeft] = useState(totalDuration); // actual study time remaining
+  const [timeUntilBreak, setTimeUntilBreak] = useState(breakInterval);
   const [isRunning, setIsRunning] = useState(true);
   const [isOnBreak, setIsOnBreak] = useState(false);
-  const [breakTimeLeft, setBreakTimeLeft] = useState(5 * 60); // 5 minutes
+  const [breakTimeLeft, setBreakTimeLeft] = useState(breakDuration);
   const [breaksCompleted, setBreaksCompleted] = useState(0);
 
   useEffect(() => {
@@ -23,25 +30,24 @@ export default function SessionTimer({ totalDuration, onSessionEnd }: SessionTim
     if (isRunning) {
       interval = setInterval(() => {
         if (isOnBreak) {
-          // On break - countdown break time
+          // On break - countdown break time and total time
           setBreakTimeLeft(prev => {
             if (prev <= 1) {
               // Break is over
               setIsOnBreak(false);
-              setTimeUntilBreak(30 * 60); // Reset to 30 minutes
-              setBreakTimeLeft(5 * 60); // Reset break time
-              return 5 * 60;
+              setTimeUntilBreak(breakInterval); // Reset to configured interval
+              setBreakTimeLeft(breakDuration); // Reset break time
+              return breakDuration;
             }
             return prev - 1;
           });
-        } else {
-          // Not on break - countdown both timers
+          
+          // Count down total time during break
           setTimeLeft(prev => {
             if (prev <= 1) {
-              // Session complete
               clearInterval(interval);
               onSessionEnd({
-                duration: Math.round((totalDuration - prev) / 60),
+                duration: Math.round((totalDuration - studyTimeLeft) / 60),
                 breaks: breaksCompleted,
                 completedFully: true
               });
@@ -49,13 +55,30 @@ export default function SessionTimer({ totalDuration, onSessionEnd }: SessionTim
             }
             return prev - 1;
           });
+        } else {
+          // Not on break - countdown study time, total time, and time until break
+          setStudyTimeLeft(prev => {
+            if (prev <= 1) {
+              // Study session complete
+              clearInterval(interval);
+              onSessionEnd({
+                duration: Math.round(totalDuration / 60),
+                breaks: breaksCompleted,
+                completedFully: true
+              });
+              return 0;
+            }
+            return prev - 1;
+          });
+          
+          setTimeLeft(prev => prev - 1);
 
           setTimeUntilBreak(prev => {
             if (prev <= 1) {
               // Time for a break
               setIsOnBreak(true);
               setBreaksCompleted(b => b + 1);
-              return 30 * 60;
+              return breakInterval;
             }
             return prev - 1;
           });
@@ -64,7 +87,7 @@ export default function SessionTimer({ totalDuration, onSessionEnd }: SessionTim
     }
     
     return () => clearInterval(interval);
-  }, [isRunning, isOnBreak, totalDuration, breaksCompleted, onSessionEnd]);
+  }, [isRunning, isOnBreak, totalDuration, breaksCompleted, onSessionEnd, breakInterval, breakDuration]);
 
   const formatTime = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);
@@ -79,7 +102,7 @@ export default function SessionTimer({ totalDuration, onSessionEnd }: SessionTim
 
   const handleEndSession = () => {
     onSessionEnd({
-      duration: Math.round((totalDuration - timeLeft) / 60),
+      duration: Math.round((totalDuration - studyTimeLeft) / 60),
       breaks: breaksCompleted,
       completedFully: false
     });

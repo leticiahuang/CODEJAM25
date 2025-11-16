@@ -32,4 +32,5 @@ core
 
 .github/
 
-.env
+
+__pyacache__/.env

@@ -15,3 +15,19 @@ frontend/node_modules/
 .venv/
 frontend/node_modules/
 
+# root-level venv
+.venv/
+# backend venv
+backend/.venv/
+
+# python cache
+__pycache__/
+*.pyc
+
+# node modules
+frontend/node_modules/
+
+# env files
+*.env
+.venv/
+frontend/node_modules/

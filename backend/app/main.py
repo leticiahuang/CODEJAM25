@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import chatbot
+from app.routers import chatbot, focus_ws, focus_score
 
 app = FastAPI(title="STUDY BUDDY API")
 
@@ -13,6 +13,9 @@ app.add_middleware(
 )
 
 app.include_router(chatbot.router, prefix="/api", tags=["chat"])
+app.include_router(focus_ws.router)
+app.include_router(focus_score.router, prefix="/api")
+
 
 @app.get("/api/health")
 async def health():

@@ -17,6 +17,8 @@ interface SessionHistory {
 export default function Dashboard() {
   const navigate = useNavigate();
   const [sessionDuration, setSessionDuration] = useState(30); // in minutes
+  const [breakInterval, setBreakInterval] = useState(30); // minutes until break
+  const [breakDuration, setBreakDuration] = useState(5); // break duration in minutes
   const [sessionHistory, setSessionHistory] = useState<SessionHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string>("");
@@ -53,7 +55,13 @@ export default function Dashboard() {
   };
 
   const handleStartSession = () => {
-    navigate("/study-session", { state: { duration: sessionDuration } });
+    navigate("/study-session", { 
+      state: { 
+        duration: sessionDuration,
+        breakInterval: breakInterval,
+        breakDuration: breakDuration
+      } 
+    });
   };
 
   const handleLogout = async () => {
@@ -71,6 +79,22 @@ export default function Dashboard() {
 
   const decrementDuration = () => {
     setSessionDuration(prev => Math.max(prev - 15, 15)); // min 15 minutes
+  };
+
+  const incrementBreakInterval = () => {
+    setBreakInterval(prev => Math.min(prev + 15, 120)); // max 2 hours
+  };
+
+  const decrementBreakInterval = () => {
+    setBreakInterval(prev => Math.max(prev - 15, 15)); // min 15 minutes
+  };
+
+  const incrementBreakDuration = () => {
+    setBreakDuration(prev => Math.min(prev + 5, 30)); // max 30 minutes
+  };
+
+  const decrementBreakDuration = () => {
+    setBreakDuration(prev => Math.max(prev - 5, 5)); // min 5 minutes
   };
 
   const formatDate = (dateString: string) => {
@@ -95,14 +119,14 @@ export default function Dashboard() {
       {/* Top Navigation Bar */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-purple-200">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Button
+          {/*<Button
             onClick={handleBackToHome}
             variant="ghost"
             className="text-purple-600 hover:text-purple-700 hover:bg-purple-100"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Home
-          </Button>
+          </Button>*/}
           <Button
             onClick={handleLogout}
             variant="ghost"
@@ -119,7 +143,11 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 rounded-full flex items-center justify-center shadow-xl">
-              <GraduationCap className="w-8 h-8 text-white" />
+              <img
+                src="/icon.png"
+                alt="App Icon"
+                className="w-32 h-32 object-contain"
+              />
             </div>
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
@@ -166,17 +194,78 @@ export default function Dashboard() {
                   </div>
                 </div>
 
+                {/* Break Interval Settings */}
+                <div className="space-y-3 pt-4 border-t border-purple-200">
+                  <div className="text-sm font-semibold text-purple-900 text-center">Break Settings</div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Break Interval */}
+                    <div className="flex flex-col items-center space-y-2">
+                      <div className="text-xs text-gray-600">Break every</div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          onClick={decrementBreakInterval}
+                          variant="outline"
+                          size="icon"
+                          className="rounded-full w-8 h-8 border-pink-300 hover:bg-pink-50"
+                        >
+                          <Minus className="w-3 h-3 text-pink-600" />
+                        </Button>
+                        <div className="text-2xl font-bold text-pink-900 font-mono w-12 text-center">
+                          {breakInterval}
+                        </div>
+                        <Button
+                          onClick={incrementBreakInterval}
+                          variant="outline"
+                          size="icon"
+                          className="rounded-full w-8 h-8 border-pink-300 hover:bg-pink-50"
+                        >
+                          <Plus className="w-3 h-3 text-pink-600" />
+                        </Button>
+                      </div>
+                      <div className="text-xs text-gray-600">minutes</div>
+                    </div>
+
+                    {/* Break Duration */}
+                    <div className="flex flex-col items-center space-y-2">
+                      <div className="text-xs text-gray-600">Break duration</div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          onClick={decrementBreakDuration}
+                          variant="outline"
+                          size="icon"
+                          className="rounded-full w-8 h-8 border-blue-300 hover:bg-blue-50"
+                        >
+                          <Minus className="w-3 h-3 text-blue-600" />
+                        </Button>
+                        <div className="text-2xl font-bold text-blue-900 font-mono w-12 text-center">
+                          {breakDuration}
+                        </div>
+                        <Button
+                          onClick={incrementBreakDuration}
+                          variant="outline"
+                          size="icon"
+                          className="rounded-full w-8 h-8 border-blue-300 hover:bg-blue-50"
+                        >
+                          <Plus className="w-3 h-3 text-blue-600" />
+                        </Button>
+                      </div>
+                      <div className="text-xs text-gray-600">minutes</div>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="bg-purple-50 rounded-xl p-4 space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Breaks:</span>
                     <span className="font-semibold text-purple-900">
-                      {Math.floor(sessionDuration / 30)} × 5 min
+                      {Math.floor(sessionDuration / breakInterval)} × {breakDuration} min
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Total time:</span>
                     <span className="font-semibold text-purple-900">
-                      {sessionDuration + Math.floor(sessionDuration / 30) * 5} min
+                      {sessionDuration + Math.floor(sessionDuration / breakInterval) * breakDuration} min
                     </span>
                   </div>
                 </div>

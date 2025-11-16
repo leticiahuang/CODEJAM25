@@ -32,5 +32,9 @@ core
 
 .github/
 
+<<<<<<< HEAD
+.env
+=======
 
 __pyacache__/
+>>>>>>> f2d835cf5d6c3f81eac4aa4a52de16c947a0f0c6

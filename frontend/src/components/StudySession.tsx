@@ -38,12 +38,23 @@ export default function StudySession() {
     setCurrentVideo(null);
   };
 
-  const handleFocusLost = () => {
+  const handleFocusLost = ({ phone, tired, fidgety }) => {
+    let message = ""
+    
+    if (phone) {
+      message = "📱 Caught you on your phone — let's put it down and stay focused!";
+    } else if (tired) {
+      message = "😴 You look tired — maybe take a quick break or stretch!";
+    } else if (fidgety) {
+      message = "🌀 You seem fidgety — try readjusting your posture and refocusing!";
+    }
+  
     const newNotification = {
       id: Date.now().toString(),
-      message: "Hey there! Let's get back to studying 📚",
-      timestamp: new Date()
+      message,
+      timestamp: new Date(),
     };
+  
     setNotifications(prev => [newNotification, ...prev].slice(0, 5));
     setInterruptionCount(prev => prev + 1);
   };

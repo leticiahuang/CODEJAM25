@@ -87,6 +87,7 @@ async def websocket_focus(websocket: WebSocket):
                     phone=json_response["phone"],
                     tired=json_response["tired"],
                     fidgety=json_response["fidgety"],
+                    focus_score=json_response["focus_score"],
                 )
 
                 # Send result back to client

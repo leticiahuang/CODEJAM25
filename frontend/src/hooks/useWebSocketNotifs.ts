@@ -10,13 +10,11 @@ export default function useWebSocketNotifications() {
     ws.onmessage = (msg) => {
       const data = JSON.parse(msg.data);
 
-      if (data.focus_score !== undefined) {
+      if (data.focus_score !== undefined && data.focus_score < 50) {
         setIncoming({
           id: Date.now().toString(),
-          message:
-            data.focus_score < 50
-              ? "Focus lost! Get back to studying 📚"
-              : "Great focus! Keep going 👍",
+          type: "phone",
+          message:"GET OFF YOUR PHOOOOONE 📴",
           icon: "⚡",
           bgColor: data.focus_score < 50 ? "bg-red-400" : "bg-green-500",
         });
@@ -25,6 +23,7 @@ export default function useWebSocketNotifications() {
       if (data.sleepiness !== undefined) {
         setIncoming({
           id: Date.now().toString(),
+          type: "tired",
           message: "Looks sleepy! Take a small break 💤",
           icon: "😴",
           bgColor: "bg-yellow-400",

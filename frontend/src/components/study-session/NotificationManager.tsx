@@ -3,6 +3,7 @@ import { NotificationProps } from "./Notification";
 
 export interface AppNotification extends NotificationProps {
   id: string;
+  type: "phone" | "tired" | "custom";
 }
 
 interface Props {

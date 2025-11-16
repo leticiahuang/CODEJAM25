@@ -7,7 +7,7 @@ import ChatInterface from "./study-session/ChatInterface";
 import CenterStage from "./study-session/CenterStage";
 import NotificationManager, { AppNotification } from "@/components/study-session/NotificationManager";
 import useWebSocketNotifs from "@/hooks/useWebSocketNotifs";
-import { LogOut } from "lucide-react";
+import { ArrowLeft, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -18,6 +18,12 @@ export default function StudySession() {
   const sessionDuration = location.state?.duration || 30; // minutes
   const breakInterval = location.state?.breakInterval || 30; // minutes
   const breakDuration = location.state?.breakDuration || 5; // minutes
+
+  const [phoneCount, setPhoneCount] = useState(0);
+  const [tiredCount, setTiredCount] = useState(0);
+  const [fidgetyCount, setFidgetyCount] = useState(0);
+  // const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  
 
   // Center Stage video
   const [currentVideo, setCurrentVideo] = useState<string | null>(null);
@@ -32,9 +38,16 @@ export default function StudySession() {
   // Handle focus lost from WebcamFeed / WS
   const handleFocusLost = ({ phone, tired, fidgety }: { phone: boolean; tired: boolean; fidgety: boolean }) => {
     let message = "";
-    if (phone) message = "📱 Caught you on your phone — put it down!";
-    else if (tired) message = "😴 You look tired — maybe take a break!";
-    else if (fidgety) message = "🌀 You seem fidgety — readjust posture!";
+    if (phone) {
+      message = "📱 Caught you on your phone — let's put it down and stay focused!";
+      setPhoneCount((c) => c + 1);
+      } else if (tired) {
+      message = "😴 You look tired — maybe take a quick break or stretch!";
+      setTiredCount((c) => c + 1);
+      } else if (fidgety) {
+      message = "🌀 You seem fidgety — try readjusting your posture and refocusing!";
+      setFidgetyCount((c) => c + 1);
+      }
 
     const newNotification = { id: Date.now().toString(), message, timestamp: new Date() };
     setNotifications(prev => [newNotification, ...prev].slice(0, 5));
@@ -53,7 +66,26 @@ export default function StudySession() {
   };
 
   const handleSessionEnd = async (stats: { duration: number; breaks: number; completedFully: boolean }) => {
-    const focusScore = 10; // placeholder, can be computed from interruptions
+    let focusScore = 0; // fallback
+
+    try {
+      const res = await fetch("/api/focus/summary?reset=true", {
+        method: "GET",
+      });
+  
+      if (res.ok) {
+        const data: { focus_score?: number } = await res.json();
+  
+        // backend returns 0–1 -> convert to % and round
+        if (typeof data.focus_score === "number") {
+          focusScore = Math.round(data.focus_score * 100);
+        }
+      } else {
+        console.error("Failed to fetch focus summary, status:", res.status);
+      }
+    } catch (err) {
+      console.error("Error calling /api/focus/summary:", err);
+    }
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -70,18 +102,23 @@ export default function StudySession() {
       console.error("Error saving session:", error);
     }
 
+    // Pass frontend-tracked counts to the summary page
     navigate("/session-summary", {
-      state: {
-        stats: {
-          duration: stats.duration,
-          focusScore,
-          breaks: stats.breaks,
-          interruptions: interruptionCount,
-          completedFully: stats.completedFully
-        }
-      }
-    });
-  };
+            state: {
+              stats: {
+                duration: stats.duration,
+                breaks: stats.breaks,
+                interruptions: interruptionCount,
+                completedFully: stats.completedFully,
+      
+                // 👇 names MUST match what SessionSummary expects: phoneCount / tiredCount / fidgetyCount
+                phoneCount,
+                fidgetyCount,
+                tiredCount,
+              },
+            },
+          });
+      };
 
   return (
     <div className="h-screen w-full bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex flex-col overflow-hidden">

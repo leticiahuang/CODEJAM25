@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import chatbot, focus_ws
+from app.routers import chatbot, focus_ws, focus_score
 
 app = FastAPI(title="STUDY BUDDY API")
 

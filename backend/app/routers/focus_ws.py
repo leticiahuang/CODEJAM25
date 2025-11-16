@@ -9,6 +9,8 @@ from ..services.phone_detection import detect_phone
 from ..services.tired_detection import detect_tired
 from ..services.fidgety_detection import detect_fidgety
 from ..services.focus_score_calculator import calculate_focus_score
+from ..routers.focus_score import update_focus_counters
+
 
 
 router = APIRouter()
@@ -27,7 +29,7 @@ def detect_focus(frame: np.ndarray):
     return {
         "type": "focus_result",
 
-        # Notifications (what you asked for)
+        # Notifications 
         "phone": phone_res.phone_detected,
         "phone_confidence": phone_res.confidence,
 
@@ -49,6 +51,7 @@ async def websocket_focus(websocket: WebSocket):
     # Accept the WebSocket connection
     await websocket.accept()
     print("Client connected to /ws/focus")
+    
 
     try:
         while True:
@@ -79,6 +82,13 @@ async def websocket_focus(websocket: WebSocket):
                 ###NOW: RETURN THE OPENCV FOCUS DETECTION RESULT
                 json_response = detect_focus(frame)
 
+                # storing stats for the final session stats
+                update_focus_counters(
+                    phone=json_response["phone"],
+                    tired=json_response["tired"],
+                    fidgety=json_response["fidgety"],
+                )
+
                 # Send result back to client
                 await websocket.send_json(json_response)
 
@@ -90,3 +100,5 @@ async def websocket_focus(websocket: WebSocket):
     except Exception as e:
         print(f"WebSocket error: {e}")
         await websocket.close()
+
+

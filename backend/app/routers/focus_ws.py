@@ -5,6 +5,11 @@ import numpy as np
 import base64
 import json
 
+from ..services.phone_detection import detect_phone
+from ..services.tired_detection import detect_tired
+from ..services.fidgety_detection import detect_fidgety
+from ..services.focus_score_calculator import calculate_focus_score
+
 
 router = APIRouter()
 
@@ -14,7 +19,27 @@ def detect_focus(frame: np.ndarray) -> bool:
     Run all 3 detectors + focus score on a single frame.
     Returns a plain dict that can be sent over WebSocket as JSON.
     """
-    return False
+    phone_res = detect_phone(frame)
+    tired_res = detect_tired(frame)
+    fidgety_res = detect_fidgety(frame)
+    focus_res = calculate_focus_score(frame)
+
+    return {
+        # Notifications (what you asked for)
+        "phone": phone_res.phone_detected,
+        "phone_confidence": phone_res.confidence,
+
+        "tired": tired_res.is_tired,
+        "tired_score": tired_res.score,  # 0–1
+
+        "fidgety": fidgety_res.is_fidgety,
+        "fidgety_score": fidgety_res.movement_score,  # 0–1
+
+        #  overall focus info
+        "focus_score": focus_res.focus_score,  # 0–1
+        "is_focused": focus_res.is_focused,
+    }
+    
 
 
 @router.websocket("/ws/focus")
@@ -50,7 +75,7 @@ async def websocket_focus(websocket: WebSocket):
                 frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
 
                 ###NOW: RETURN THE OPENCV FOCUS DETECTION RESULT
-                is_focused = detect_focus(frame)
+                is_focused = detect_focus(frame)['fidgety']
 
                 # Send result back to client
                 await websocket.send_json(

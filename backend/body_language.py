@@ -2,7 +2,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 from collections import deque
-#import streamlit as st
+import streamlit as st
 import time
 
 mp_drawing = mp.solutions.drawing_utils
@@ -296,6 +296,11 @@ class BodyLanguageAnalyzer:
             return 0.0
         frames_after_cal = self.total_frames - FROWN_CALIB_FRAMES
         return (self.frown_frame_count / frames_after_cal) * 100
+
+
+
+
+
 
 
 

@@ -6,7 +6,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 
-from body_language import BodyLanguageAnalyzer  # your existing class
+from face_state import FaceStateCalculator 
 
 
 @dataclass
@@ -19,7 +19,7 @@ class TiredDetectionResult:
 
 # We keep one BodyLanguageAnalyzer and one Holistic model for the whole process.
 # This allows blink_rate and eye_closed_frames to accumulate across frames.
-_analyzer = BodyLanguageAnalyzer()
+_analyzer = FaceStateCalculator()
 
 _mp_holistic = mp.solutions.holistic
 _holistic = _mp_holistic.Holistic(

@@ -6,7 +6,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 
-from body_language import BodyLanguageAnalyzer  # your existing class
+from face_state import FaceStateCalculator  
 
 
 @dataclass
@@ -18,7 +18,7 @@ class FidgetyDetectionResult:
 # ---------- GLOBAL ANALYZER + MEDIAPIPE HOLISTIC (stateful) ---------- #
 
 # This analyzer keeps state across frames (hand velocity history, etc.)
-_analyzer = BodyLanguageAnalyzer()
+_analyzer = FaceStateCalculator()
 
 _mp_holistic = mp.solutions.holistic
 _holistic = _mp_holistic.Holistic(

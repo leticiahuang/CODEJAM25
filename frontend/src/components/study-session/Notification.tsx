@@ -6,7 +6,7 @@ export interface NotificationProps {
   icon?: string;
   bgColor?: string;
   duration?: number;
-  type?: "phone" | "tired" | "custom"; 
+  type?: "phone" | "tired" | "fidgety"; 
   onClose?: () => void;
 }
 
@@ -24,7 +24,7 @@ export default function Notification({
   const audioMap: Record<NotificationProps["type"], string> = {
     phone: "/airhorn.mp3",
     tired: "/airhorn.mp3",
-    custom: "/airhorn.mp3",
+    fidgety: "/airhorn.mp3",
   };
 
   useEffect(() => {

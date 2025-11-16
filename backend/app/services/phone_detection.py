@@ -69,7 +69,7 @@ def detect_phone(frame: np.ndarray) -> PhoneDetectionResult:
     """
     Return whether a phone is detected in the frame using YOLOv3-tiny.
 
-    This is a direct port of your old Streamlit-based `detect_phone` function,
+    This is a direct port of your `detect_phone` function,
     but with the model stored as a module-global instead of in st.session_state.
     """
     _load_yolo_model_if_needed()

@@ -57,7 +57,7 @@ def detect_tired(frame: np.ndarray) -> TiredDetectionResult:
     score = 0.0
 
     if feedback:
-        # Same variables as in your Streamlit app
+        # Same variables 
         blink_rate = feedback["blink_rate"]["rate"]
         long_closure = _analyzer.eye_closed_frames >= 30  # ~1–1.5 seconds
         very_high_blink_rate = blink_rate > 40.0

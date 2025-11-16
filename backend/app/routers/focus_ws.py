@@ -14,7 +14,7 @@ from ..services.focus_score_calculator import calculate_focus_score
 router = APIRouter()
 
 
-def detect_focus(frame: np.ndarray) -> bool:
+def detect_focus(frame: np.ndarray):
     """
     Run all 3 detectors + focus score on a single frame.
     Returns a plain dict that can be sent over WebSocket as JSON.
@@ -25,6 +25,8 @@ def detect_focus(frame: np.ndarray) -> bool:
     focus_res = calculate_focus_score(frame)
 
     return {
+        "type": "focus_result",
+
         # Notifications (what you asked for)
         "phone": phone_res.phone_detected,
         "phone_confidence": phone_res.confidence,
@@ -75,15 +77,10 @@ async def websocket_focus(websocket: WebSocket):
                 frame = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
 
                 ###NOW: RETURN THE OPENCV FOCUS DETECTION RESULT
-                is_focused = detect_focus(frame)['fidgety']
+                json_response = detect_focus(frame)
 
                 # Send result back to client
-                await websocket.send_json(
-                    {
-                        "type": "focus_result",
-                        "is_focused": bool(is_focused),
-                    }
-                )
+                await websocket.send_json(json_response)
 
             except Exception as e:
                 print(f"Error processing frame: {e}")

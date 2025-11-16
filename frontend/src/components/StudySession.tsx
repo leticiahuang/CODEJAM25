@@ -76,7 +76,26 @@ export default function StudySession() {
     completedFully: boolean;
   }) => {
     // Calculate focus score based on interruptions and duration (placeholder)
-    const focusScore = 10;
+    let focusScore = 0; // fallback
+
+  try {
+    const res = await fetch("/api/focus/summary?reset=true", {
+      method: "GET",
+    });
+
+    if (res.ok) {
+      const data: { focus_score?: number } = await res.json();
+
+      // backend returns 0–1 -> convert to % and round
+      if (typeof data.focus_score === "number") {
+        focusScore = Math.round(data.focus_score * 100);
+      }
+    } else {
+      console.error("Failed to fetch focus summary, status:", res.status);
+    }
+  } catch (err) {
+    console.error("Error calling /api/focus/summary:", err);
+  }
     
     // Save session to Supabase
     try {

@@ -69,7 +69,11 @@ export default function Auth() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full mb-4">
-            <span className="text-5xl">🎓</span>
+          <img
+              src={"icon.png"}
+              alt="Study Buddy Owl"
+              className="w-16 h-16 object-contain"
+            />
           </div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
             Study Buddy

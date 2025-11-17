@@ -1,4 +1,4 @@
-to run backend:
+follow these instructions exactly to run backend:
 
 1. cd to backend
 2. python3.10 -m venv .venv

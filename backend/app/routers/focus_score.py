@@ -31,6 +31,7 @@ def update_focus_counters(*, phone: bool, tired: bool, fidgety: bool, focus_scor
     """
     global phone_count, tired_count, fidgety_count, focus_timeline, time_counter
 
+    # ranked by priority. Ex: If all true, only phone notification is displayed
     if phone:
         phone_count += 1
     if tired:

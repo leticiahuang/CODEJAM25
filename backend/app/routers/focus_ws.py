@@ -90,7 +90,7 @@ async def websocket_focus(websocket: WebSocket):
                     focus_score=json_response["focus_score"],
                 )
 
-                # Send result back to client
+                # Send result back to client (frontend to be parsed)
                 await websocket.send_json(json_response)
 
             except Exception as e:

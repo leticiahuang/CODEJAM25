@@ -20,7 +20,7 @@ def calculate_focus_score(frame: np.ndarray) -> FocusScoreResult:
     """
     Use phone, tired, and fidgety signals to compute a focus score for this frame.
 
-    This is just one example weighting. You can adjust the formula.
+    This is just one example weighting. We chose to penalize being on your phone the most.
     """
     phone_res = detect_phone(frame)
     tired_res = detect_tired(frame)

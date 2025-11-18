@@ -42,17 +42,16 @@ def update_focus_counters(*, phone: bool, tired: bool, fidgety: bool, focus_scor
     time_counter += 1.0 
 
 
-"""
-    Returns how many times phone/tired/fidgety were true overall.
-    If reset=true, also clears the counters after returning them.
-"""
 
 @router.get("/summary", response_model=FocusSummary)
 def get_focus_summary(reset: bool = False) -> FocusSummary:
-    
+    """
+    Returns how many times phone/tired/fidgety were true overall.
+    If reset=true, also clears the counters after returning them.
+    """
     global phone_count, tired_count, fidgety_count, focus_timeline, time_counter
 
-    #calculate average focus score
+    # calculate average focus score using average of all frames
     if focus_timeline:
         avg_focus = sum(score for _, score in focus_timeline) / len(focus_timeline)
     else:
@@ -75,13 +74,3 @@ def get_focus_summary(reset: bool = False) -> FocusSummary:
 
     return summary
 
-
-# @router.get("/summary", response_model=FocusSummary)
-# def get_focus_summary(reset: bool = False) -> FocusSummary:
-#     return FocusSummary(
-#         phone=3,
-#         tired=1,
-#         fidgety=2,
-#         focus_score=0.82,
-#         focus_timeline=[[0, 0.8], [1, 0.85], [2, 0.83]]
-#     )

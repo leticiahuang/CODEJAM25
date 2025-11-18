@@ -26,10 +26,10 @@ Study Buddy is a study companion that helps you stay focused and understand your
 ### 4. Session History 📃
 - Review past sessions to track productivity over time
 
-### 4. Chatbot Assistant 🤖
+### 5. Chatbot Assistant 🤖
 - Plays a requested background video from Youtube using Google's Gemini AI
 
-### 5. How we built it 🛠
+### 6. How we built it 🛠
 - Frontend: React & Typescript
 - Backend: Python, FastAPI, Uvicorn, WebSockets
 - Computer Vision: OpenCV + MediaPipe

@@ -1,5 +1,6 @@
 # root-level venv
 .venv/
+venv
 # backend venv
 backend/.venv/
 

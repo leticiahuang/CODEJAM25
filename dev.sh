@@ -27,7 +27,7 @@ cleanup() {
   fi
 
   echo
-  echo "🔗 If your browser didn't open automatically, you can access the app at:"
+  echo " If your browser didn't open automatically, you can access the app at:"
   echo "   $FRONTEND_URL"
 }
 
@@ -74,10 +74,10 @@ detect_python
 echo "Using Python: $PYTHON_CMD"
 echo
 
-echo "📦 Setting up Python virtual environment..."
+echo "Setting up Python virtual environment..."
 
 if [ ! -d ".venv" ]; then
-  echo "➡️  Creating .venv in project root..."
+  echo "  Creating .venv in project root..."
   "$PYTHON_CMD" -m venv .venv
 fi
 
@@ -117,7 +117,7 @@ if open_browser; then
   BROWSER_OPENED=1
   echo "Browser open command dispatched."
 else
-  echo "Could not automatically open the browser."
+  echo " Could not automatically open the browser."
   echo "   Once the frontend dev server is running, open this link manually:"
   echo "   $FRONTEND_URL"
 fi

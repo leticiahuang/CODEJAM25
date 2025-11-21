@@ -14,26 +14,38 @@ Write-Host "Setting up Python virtual environment..."
 
 
 # Detect python
-$pythonCandidates = @("python", "python3")
-$pythonCmd = $null
-foreach ($candidate in $pythonCandidates) {
-    $which = (Get-Command $candidate -ErrorAction SilentlyContinue)
-    if ($which) {
-        $pythonCmd = $candidate
-        break
+$pythonExe = $null
+$pythonArgs = @()
+
+foreach ($v in "3.11", "3.10") {
+    try {
+        # Check if py -3.x exists
+        $versionOutput = & py "-$v" --version 2>&1
+        if ($versionOutput -match "Python (\d+)\.(\d+)\.(\d+)") {
+            $pythonExe = "py"
+            $pythonArgs = @("-$v")
+            break
+        }
+    } catch {
+        continue
     }
 }
-if (-not $pythonCmd) {
-    Write-Host "Could not find python or python3 on PATH."
-    exit 1
-}
-Write-Host "Using Python:" $pythonCmd
-Write-Host ""
 
-# Create venv if needed (use .venv to match dev.sh)
-if (-not (Test-Path ".venv")) {
-    Write-Host "Creating .venv in project root..."
-    & $pythonCmd -m venv .venv
+if (-not $pythonExe) {
+    Write-Host "Python 3.10 or 3.11 not found." -ForegroundColor Red
+    exit 1
+} else {
+    Write-Host "Using Python executable: $pythonExe $($pythonArgs -join ' ')" -ForegroundColor Green
+}
+
+# Create virtual environment
+$venvPath = ".venv"
+& $pythonExe $pythonArgs -m venv $venvPath
+
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "Virtual environment created at $venvPath" -ForegroundColor Green
+} else {
+    Write-Host "Failed to create virtual environment." -ForegroundColor Red
 }
 
 # Activate venv

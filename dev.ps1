@@ -35,17 +35,20 @@ if (-not $pythonExe) {
     Write-Host "Python 3.10 or 3.11 not found." -ForegroundColor Red
     exit 1
 } else {
-    Write-Host "Using Python executable: $pythonExe $($pythonArgs -join ' ')" -ForegroundColor Green
+    Write-Host "Using Python: $pythonExe $($pythonArgs -join ' ')" -ForegroundColor Green
 }
 
 # Create virtual environment
-$venvPath = ".venv"
-& $pythonExe $pythonArgs -m venv $venvPath
+if (-not (Test-Path ".venv")) {
+    Write-Host "Creating .venv in project root..."
+    $venvPath = ".venv"
+    & $pythonExe $pythonArgs -m venv $venvPath
 
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "Virtual environment created at $venvPath" -ForegroundColor Green
-} else {
-    Write-Host "Failed to create virtual environment." -ForegroundColor Red
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Virtual environment created at $venvPath" -ForegroundColor Green
+    } else {
+        Write-Host "Failed to create virtual environment." -ForegroundColor Red
+    }
 }
 
 # Activate venv
